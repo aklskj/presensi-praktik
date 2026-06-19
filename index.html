@@ -929,7 +929,9 @@
             } catch (error) {
                 hideLoading();
                 console.error(error);
-                return { success: false, message: 'Gagal terhubung ke server. Periksa URL GAS dan koneksi internet.' };
+                // Tampilkan pesan error yang lebih jelas
+                tampilkanPesan('error', error.message || 'Gagal terhubung ke server. Periksa URL GAS dan koneksi internet.');
+                return { success: false, message: error.message };
             }
         }
 
