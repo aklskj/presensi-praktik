@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Presensi PKL Secure v6</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .loader { border-top-color: #3498db; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        div:where(.swal2-container) { z-index: 10000 !important; }
+        .swal2-popup { border-radius: 1rem !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+    <div id="loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-70 hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-500 h-16 w-16 mb-4"></div>
+        <p id="loading-text" class="text-white font-semibold text-center px-4">Memproses data...</p>
+    </div>
+
+    <input type="file" id="kameraNative" accept="image/*" capture="user" class="hidden" onchange="prosesFotoNative(event)">
+
+    <div class="max-w-md mx-auto p-4 pt-8">
+        
+        <div id="login-section" class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-600">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-blue-100 p-4 rounded-full mb-3">
+                    <i class="fas fa-shield-alt text-4xl text-blue-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold">Portal PKL Secure</h1>
+                <p class="text-xs text-green-600 font-bold mt-1"><i class="fas fa-server mr-1"></i> Terhubung ke Server Terpusat</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">NISN</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-id-badge text-gray-400"></i>
+                    </div>
+                    <input type="number" id="inputNisn" class="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Masukkan NISN">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="inputPassword" class="w-full pl-10 pr-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Masukkan Password">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onclick="togglePassword()">
+                        <i class="fas fa-eye text-gray-400" id="eyeIcon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="login()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">
+                Masuk Sistem
+            </button>
+        </div>
+
+        <div id="dashboard-section" class="hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl p-5 mb-4 shadow-lg relative overflow-hidden">
+                <button onclick="logout()" class="absolute top-4 right-4 text-white hover:text-red-300 bg-white bg-opacity-20 rounded-full p-2 text-xs">
+                    <i class="fas fa-sign-out-alt"></i> Keluar
+                </button>
+                <h2 class="text-xl font-bold" id="displayNama">Nama Siswa</h2>
+                <p class="text-sm opacity-90 mt-1"><i class="fas fa-id-card mr-2"></i><span id="displayNisn"></span></p>
+                <p class="text-sm opacity-90 mt-1"><i class="fas fa-building mr-2"></i><span id="displayDudi"></span> (<span id="displayKategori"></span>)</p>
+                
+                <div class="mt-3 bg-black bg-opacity-30 rounded p-2 text-center">
+                    <p class="text-xs opacity-75">Waktu Server (WIB)</p>
+                    <p class="font-mono font-bold text-lg" id="server-clock">--:--:--</p>
+                </div>
+            </div>
+
+            <div class="flex border-b border-gray-300 mb-4 bg-white rounded-t-xl">
+                <button onclick="switchTab('presensi')" id="tab-presensi" class="flex-1 py-3 text-center font-bold text-blue-600 border-b-2 border-blue-600">Presensi</button>
+                <button onclick="switchTab('jurnal')" id="tab-jurnal" class="flex-1 py-3 text-center font-bold text-gray-500 hover:text-blue-600 transition">Jurnal Harian</button>
+            </div>
+
+            <div id="content-presensi" class="bg-white rounded-b-xl shadow-lg p-5">
+                <div id="alert-lokasi" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 hidden rounded-r" role="alert">
+                    <p class="font-bold flex items-center"><i class="fas fa-map-marker-alt mr-2"></i> Status Lokasi</p>
+                    <p id="jarak-text" class="text-sm mt-1">Mencari satelit GPS...</p>
+                </div>
+
+                <div id="alert-waktu" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 hidden rounded-r" role="alert">
+                    <p class="font-bold flex items-center"><i class="fas fa-clock mr-2"></i> Status Waktu</p>
+                    <p class="text-sm mt-1" id="waktu-text"></p>
+                </div>
+
+                <div class="flex gap-4 mb-2">
+                    <button id="btn-datang" onclick="siapkanKamera('datang')" class="flex-1 transition">
+                        <i id="icon-datang" class="fas fa-camera text-2xl mb-2"></i> 
+                        <span id="text-datang" class="block">Foto Datang</span>
+                    </button>
+                    <button id="btn-pulang" onclick="siapkanKamera('pulang')" class="flex-1 transition">
+                        <i id="icon-pulang" class="fas fa-camera text-2xl mb-2"></i> 
+                        <span id="text-pulang" class="block">Foto Pulang</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="content-jurnal" class="bg-white rounded-b-xl shadow-lg p-5 hidden">
+                <div id="jurnal-form-container">
+                    <label class="block font-bold text-gray-700 mb-2">Kegiatan Hari Ini</label>
+                    <textarea id="jurnal-teks" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4 resize-none" placeholder="Tuliskan aktivitas PKL Anda secara detail..."></textarea>
+                    
+                    <button onclick="siapkanKamera('jurnal')" class="w-full border-2 border-dashed border-gray-400 text-gray-600 py-3 rounded-lg font-bold hover:bg-gray-50 mb-4 transition">
+                        <i class="fas fa-camera mr-2"></i> Lampirkan Foto Bukti
+                    </button>
+                    <div id="preview-container-jurnal" class="hidden mb-4 relative">
+                        <img id="preview-img-jurnal" src="" class="w-full rounded-lg shadow-sm border border-gray-200">
+                        <button onclick="batalFotoJurnal()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center shadow"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <button onclick="prosesSubmitJurnal()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition">
+                        <i class="fas fa-paper-plane mr-2"></i> Kirim Jurnal
+                    </button>
+                </div>
+                
+                <div id="jurnal-success-container" class="hidden bg-green-100 p-6 rounded-lg border border-green-300 text-center">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
+                    <h3 class="font-bold text-green-800 text-lg">Terima Kasih!</h3>
+                    <p class="text-sm text-green-700 mt-1">Anda sudah mengisi laporan jurnal hari ini.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Endpoint API Apps Script (GANTI DENGAN URL DEPLOYMENT WEB APP ANDA)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyFEn836TTyQBzcFJvOBipKiMcnp6H-evgoKmuX5QWw_SteVIUMkWJVDAosrxhwB90W1g/exec';
+
+        let appState = { waktuDatangAllowed: false, waktuPulangAllowed: false, gpsValid: false };
+        let currentStudent = null;
+        let authPassword = null;
+        let userLocation = null;
+        let currentDistance = null;
+        let actionType = null; 
+        let fotoJurnalBase64 = null;
+        let serverTimeOffset = 0; 
+        let clockInterval;
+
+        const LAT_TOLERANCE_METERS = 200;
+
+        function showLoading(text = "Memproses...") { 
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading').classList.remove('hidden'); 
+        }
+        function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+
+        function showPopUp(tipe, pesan, judul = "") {
+            if (tipe === 'success') {
+                Swal.fire({ title: judul || 'Berhasil!', text: pesan, icon: 'success', confirmButtonColor: '#2563eb' });
+            } else if (tipe === 'error') {
+                Swal.fire({ title: judul || 'Ditolak!', text: pesan, icon: 'error', confirmButtonColor: '#dc2626' });
+            } else {
+                Swal.fire({ title: judul || 'Informasi', text: pesan, icon: 'info', confirmButtonColor: '#2563eb' });
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('inputPassword');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === "password") {
+                input.type = "text"; icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = "password"; icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function getRealJakartaTime() {
+            return new Date(new Date().getTime() + serverTimeOffset);
+        }
+
+        function mulaiJamServer() {
+            if(clockInterval) clearInterval(clockInterval);
+            clockInterval = setInterval(() => {
+                const realTime = getRealJakartaTime();
+                const formatter = new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Jakarta', hour12: false,
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+                document.getElementById('server-clock').innerText = formatter.format(realTime);
+                if(realTime.getSeconds() === 0 && userLocation) cekWaktuDanTombol();
+            }, 1000);
+        }
+
+        window.onload = function() {
+            const savedSession = localStorage.getItem('pklSession_v6');
+            if (savedSession) {
+                const sessionData = JSON.parse(savedSession);
+                if (sessionData.date === new Date().toDateString()) {
+                    diamDiamUpdateSession(sessionData.student.nisn, sessionData.password);
+                } else {
+                    localStorage.removeItem('pklSession_v6'); 
+                }
+            }
+        }
+
+        // FUNGSI KOMUNIKASI KE SERVER MENGGUNAKAN FETCH (PENGGANTI google.script.run)
+        async function fetchServer(action, payload) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, ...payload })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Network Error:', error);
+                throw new Error('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+            }
+        }
+
+        function diamDiamUpdateSession(nisn, pwd) {
+            showLoading("Memuat Sesi...");
+            fetchServer('otentikasi', { nisn: nisn, password: pwd })
+                .then(response => {
+                    hideLoading();
+                    if(response.success){
+                        currentStudent = response;
+                        authPassword = pwd;
+                        serverTimeOffset = response.serverTime.epoch - new Date().getTime();
+                        setupDashboard();
+                    } else {
+                        logout();
+                    }
+                })
+                .catch(err => {
+                    hideLoading();
+                    logout();
+                });
+        }
+
+        function login() {
+            const nisn = document.getElementById('inputNisn').value;
+            const password = document.getElementById('inputPassword').value;
+            if (!nisn || !password) return showPopUp('error', "NISN dan Password wajib diisi!", "Perhatian");
+            
+            showLoading("Mencocokkan Data...");
+            fetchServer('otentikasi', { nisn: nisn, password: password })
+                .then(response => {
+                    hideLoading();
+                    if (response.success) {
+                        currentStudent = response;
+                        authPassword = password;
+                        serverTimeOffset = response.serverTime.epoch - new Date().getTime();
+
+                        localStorage.setItem('pklSession_v6', JSON.stringify({
+                            student: currentStudent, password: password, date: new Date().toDateString()
+                        }));
+                        setupDashboard();
+                    } else {
+                        showPopUp('error', response.message);
+                    }
+                })
+                .catch(err => {
+                    hideLoading();
+                    showPopUp('error', err.message);
+                });
+        }
+
+        function logout() {
+            localStorage.removeItem('pklSession_v6');
+            if(clockInterval) clearInterval(clockInterval);
+            currentStudent = null; authPassword = null;
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('inputPassword').value = '';
+        }
+
+        function setupDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('displayNama').innerText = currentStudent.nama;
+            document.getElementById('displayNisn').innerText = currentStudent.nisn;
+            document.getElementById('displayDudi').innerText = currentStudent.dudi;
+            document.getElementById('displayKategori').innerText = currentStudent.kategori;
+
+            mulaiJamServer();
+            cekWaktuDanTombol(); 
+            cekLokasi(); 
+        }
+
+        function renderButtonsUI() {
+            if (!currentStudent) return;
+            
+            const btnDatang = document.getElementById('btn-datang');
+            const iconDatang = document.getElementById('icon-datang');
+            const textDatang = document.getElementById('text-datang');
+            
+            const btnPulang = document.getElementById('btn-pulang');
+            const iconPulang = document.getElementById('icon-pulang');
+            const textPulang = document.getElementById('text-pulang');
+
+            btnDatang.disabled = true;
+            btnPulang.disabled = true;
+
+            const baseClass = "flex-1 py-4 rounded-xl font-bold shadow-md transition flex flex-col items-center";
+            const disabledGrey = "bg-gray-400 text-gray-700 cursor-not-allowed";
+            const activeGreen = "bg-emerald-500 text-white hover:bg-emerald-600";
+            const activeRed = "bg-rose-500 text-white hover:bg-rose-600";
+
+            if (currentStudent.hasDatang) {
+                btnDatang.className = `${baseClass} ${disabledGrey}`;
+                iconDatang.className = "fas fa-check-circle text-3xl mb-1 text-green-700";
+                textDatang.innerText = "Selesai Datang";
+            } else if (!appState.waktuDatangAllowed || !appState.gpsValid) {
+                btnDatang.className = `${baseClass} ${disabledGrey}`;
+                iconDatang.className = "fas fa-camera text-3xl mb-1";
+                textDatang.innerText = "Foto Datang";
+            } else {
+                btnDatang.className = `${baseClass} ${activeGreen}`;
+                iconDatang.className = "fas fa-camera text-3xl mb-1";
+                textDatang.innerText = "Foto Datang";
+                btnDatang.disabled = false;
+            }
+
+            if (currentStudent.hasPulang) {
+                btnPulang.className = `${baseClass} ${disabledGrey}`;
+                iconPulang.className = "fas fa-check-circle text-3xl mb-1 text-green-700";
+                textPulang.innerText = "Selesai Pulang";
+            } else if (!appState.waktuPulangAllowed || !appState.gpsValid) {
+                btnPulang.className = `${baseClass} ${disabledGrey}`;
+                iconPulang.className = "fas fa-camera text-3xl mb-1";
+                textPulang.innerText = "Foto Pulang";
+            } else {
+                btnPulang.className = `${baseClass} ${activeRed}`;
+                iconPulang.className = "fas fa-camera text-3xl mb-1";
+                textPulang.innerText = "Foto Pulang";
+                btnPulang.disabled = false;
+            }
+
+            if (currentStudent.hasJurnal) {
+                document.getElementById('jurnal-form-container').classList.add('hidden');
+                document.getElementById('jurnal-success-container').classList.remove('hidden');
+            } else {
+                document.getElementById('jurnal-form-container').classList.remove('hidden');
+                document.getElementById('jurnal-success-container').classList.add('hidden');
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('content-presensi').classList.add('hidden');
+            document.getElementById('content-jurnal').classList.add('hidden');
+            ['presensi', 'jurnal'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                el.classList.add('text-gray-500');
+            });
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`tab-${tab}`);
+            activeTab.classList.replace('text-gray-500', 'text-blue-600');
+            activeTab.classList.add('border-b-2', 'border-blue-600');
+        }
+
+        function cekWaktuDanTombol() {
+            const realTime = getRealJakartaTime();
+            const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', hour12: false, weekday: 'short', hour: 'numeric', minute: 'numeric' });
+            const parts = formatter.formatToParts(realTime);
+            let hari = "", jam = 0, menit = 0;
+            parts.forEach(p => {
+                if(p.type === 'weekday') hari = p.value;
+                if(p.type === 'hour') jam = parseInt(p.value);
+                if(p.type === 'minute') menit = parseInt(p.value);
+            });
+
+            const dayMap = {"Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 0};
+            const hariNum = dayMap[hari];
+            const timeInMinutes = jam * 60 + menit;
+
+            let isKerja = false;
+            let startLimit = 0, cutoffLimit = 0, endLimit = 0;
+            const kat = currentStudent.kategori;
+
+            if (kat === 'Desa' && hariNum >= 1 && hariNum <= 5) {
+                isKerja = true; startLimit = 7 * 60; cutoffLimit = 8 * 60; endLimit = 13 * 60;
+            } else if (kat === 'Non-Desa' && hariNum >= 1 && hariNum <= 5) {
+                isKerja = true; startLimit = 7 * 60; cutoffLimit = 8 * 60; endLimit = 15 * 60;
+            } else if (kat === 'PT' && hariNum >= 1 && hariNum <= 6) {
+                isKerja = true; startLimit = 8 * 60; cutoffLimit = 11 * 60; endLimit = 15 * 60;
+            }
+
+            const alertWaktu = document.getElementById('alert-waktu');
+            const textWaktu = document.getElementById('waktu-text');
+            
+            appState.waktuDatangAllowed = false;
+            appState.waktuPulangAllowed = false;
+
+            if (!isKerja) {
+                alertWaktu.classList.remove('hidden');
+                textWaktu.innerText = "Sistem presensi ditutup (Bukan jadwal PKL).";
+            } else {
+                if (timeInMinutes < startLimit - 30) {
+                    alertWaktu.classList.remove('hidden'); textWaktu.innerText = "Belum waktunya absen kedatangan.";
+                } else if (timeInMinutes > cutoffLimit) {
+                    alertWaktu.classList.remove('hidden'); textWaktu.innerText = "Batas waktu kedatangan habis (Terlambat > 1 Jam).";
+                } else {
+                    appState.waktuDatangAllowed = true;
+                    alertWaktu.classList.add('hidden');
+                }
+                if (timeInMinutes >= endLimit - 30) appState.waktuPulangAllowed = true;
+            }
+            
+            renderButtonsUI();
+        }
+
+        function cekLokasi() {
+            document.getElementById('alert-lokasi').classList.remove('hidden');
+            document.getElementById('jarak-text').innerHTML = "<i class='fas fa-spinner fa-spin'></i> Mencari satelit GPS...";
+            appState.gpsValid = false;
+            renderButtonsUI();
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const coords = position.coords;
+                        if (coords.accuracy > 150) return showErrorGps(`Sinyal GPS lemah (${Math.round(coords.accuracy)}m). Pindah ke ruang terbuka.`);
+                        if (coords.altitude === 0 && coords.altitudeAccuracy === 0) return showErrorGps("Terdeteksi anomali GPS (Mock Location). Matikan Fake GPS.");
+                        
+                        userLocation = { lat: coords.latitude, lng: coords.longitude };
+                        hitungJarak();
+                    },
+                    error => {
+                        let errMsg = "Gagal membaca GPS.";
+                        if (error.code === 1) errMsg = "Izin Lokasi diblokir oleh browser HP Anda.";
+                        if (error.code === 2) errMsg = "Sinyal GPS hilang/mati.";
+                        if (error.code === 3) errMsg = "Time out mencari satelit.";
+                        showErrorGps(errMsg);
+                    },
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 } 
+                );
+            } else {
+                showErrorGps("Perangkat tidak mendukung GPS.");
+            }
+        }
+
+        function showErrorGps(msg) {
+            document.getElementById('alert-lokasi').className = "bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-r";
+            document.getElementById('jarak-text').innerHTML = `<strong>Error:</strong> ${msg}`;
+            appState.gpsValid = false;
+            renderButtonsUI();
+        }
+
+        function hitungJarak() {
+            const R = 6371e3;
+            const lat1 = currentStudent.lat * Math.PI/180;
+            const lon1 = currentStudent.lng * Math.PI/180;
+            const lat2 = userLocation.lat * Math.PI/180;
+            const lon2 = userLocation.lng * Math.PI/180;
+            const dLat = lat2-lat1;
+            const dLon = lon2-lon1;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            currentDistance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            
+            const alertBox = document.getElementById('alert-lokasi');
+            if (currentDistance <= LAT_TOLERANCE_METERS) {
+                alertBox.className = "bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded-r";
+                document.getElementById('jarak-text').innerHTML = `<strong>Aman!</strong> Jarak ke DUDI: ${currentDistance} meter.`;
+                appState.gpsValid = true;
+            } else {
+                alertBox.className = "bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-r";
+                document.getElementById('jarak-text').innerHTML = `<strong>Di Luar Area!</strong> Jarak Anda: ${currentDistance}m (Maks ${LAT_TOLERANCE_METERS}m).`;
+                appState.gpsValid = false;
+            }
+            renderButtonsUI();
+        }
+
+        function siapkanKamera(jenis) {
+            actionType = jenis;
+            document.getElementById('kameraNative').click();
+        }
+
+        function prosesFotoNative(event) {
+            const file = event.target.files[0];
+            if (!file) return; 
+
+            showLoading("Mengompres Foto...");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 800;
+                    let width = img.width, height = img.height;
+
+                    if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const base64Data = canvas.toDataURL('image/jpeg', 0.5);
+
+                    if (actionType === 'jurnal') {
+                        fotoJurnalBase64 = base64Data;
+                        document.getElementById('preview-container-jurnal').classList.remove('hidden');
+                        document.getElementById('preview-img-jurnal').src = base64Data;
+                        hideLoading();
+                    } else {
+                        eksekusiPresensi(base64Data);
+                    }
+                    document.getElementById('kameraNative').value = ""; 
+                }
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function batalFotoJurnal() {
+            fotoJurnalBase64 = null;
+            document.getElementById('preview-container-jurnal').classList.add('hidden');
+            document.getElementById('preview-img-jurnal').src = "";
+        }
+
+        function eksekusiPresensi(fotoBase64) {
+            showLoading("Mengirim ke Server...");
+            const payload = { 
+                nisn: currentStudent.nisn, password: authPassword, nama: currentStudent.nama, 
+                jenis: actionType, jarak: currentDistance, fotoBase64: fotoBase64 
+            };
+
+            fetchServer('presensi', { payload: payload })
+                .then(response => {
+                    hideLoading();
+                    if(response.success) {
+                        showPopUp('success', response.message);
+                        if(response.jenis === 'datang') currentStudent.hasDatang = true;
+                        if(response.jenis === 'pulang') currentStudent.hasPulang = true;
+                        renderButtonsUI();
+                    } else {
+                        showPopUp('error', response.message);
+                    }
+                })
+                .catch(err => {
+                    hideLoading();
+                    showPopUp('error', err.message);
+                });
+        }
+
+        function prosesSubmitJurnal() {
+            const kegiatan = document.getElementById('jurnal-teks').value;
+            if (!kegiatan) return showPopUp('info', "Silakan isi teks kegiatan jurnal!");
+
+            showLoading("Menyimpan Jurnal...");
+            const payload = { 
+                nisn: currentStudent.nisn, password: authPassword, nama: currentStudent.nama, 
+                kegiatan: kegiatan, fotoBase64: fotoJurnalBase64 
+            };
+
+            fetchServer('jurnal', { payload: payload })
+                .then(response => {
+                    hideLoading();
+                    if(response.success) {
+                        showPopUp('success', response.message);
+                        document.getElementById('jurnal-teks').value = '';
+                        batalFotoJurnal();
+                        currentStudent.hasJurnal = true;
+                        renderButtonsUI();
+                    } else {
+                        showPopUp('error', response.message);
+                    }
+                })
+                .catch(err => {
+                    hideLoading();
+                    showPopUp('error', err.message);
+                });
+        }
+    </script>
+</body>
+</html>
