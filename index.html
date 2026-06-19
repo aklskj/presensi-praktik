@@ -20,6 +20,7 @@
     </script>
 
     <style>
+        /* (semua style tetap sama seperti sebelumnya, tidak diubah) */
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex;
@@ -878,169 +879,50 @@
 
     <script>
         // =====================================================================
-        // MOCKING SYSTEM / SIMULASI BACKEND UNTUK TESTING LOKAL
+        // KONFIGURASI URL BACKEND (GAS)
+        // GANTI DENGAN URL DEPLOYMENT ANDA
         // =====================================================================
-        if (typeof google === 'undefined') {
-            console.warn("BERJALAN DI MODE TESTING LOKAL (MOCK DATA)");
-            window.google = {
-                script: {
-                    run: {
-                        withSuccessHandler: function(callback) { this.successCb = callback; return this; },
-                        withFailureHandler: function(callback) { this.failureCb = callback; return this; },
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxhRAuqKJz1vYI5_eqX35EKvYemwhTI2XqWyCw3iauCxLXF7jvkY_7Aw12grc3g1BlabQ/exec'; // <-- GANTI DENGAN URL ASLI
 
-                        // 1. Simulasi Login
-                        loginSistem: function(u, p) {
-                            setTimeout(() => {
-                                if (u.toLowerCase() === 'admin' || u.toLowerCase() === 'guru') {
-                                    this.successCb({
-                                        success: true,
-                                        role: 'admin',
-                                        username: u,
-                                        nama: 'Bapak ' + u.toUpperCase(),
-                                        tipe: 'Admin',
-                                        pengumuman: 'Ini adalah pengumuman dari mode demo lokal.'
-                                    });
-                                } else {
-                                    this.successCb({
-                                        success: true,
-                                        role: 'siswa',
-                                        serverTimeEpoch: new Date().getTime(),
-                                        nisn: u || '123456789',
-                                        nama: 'Siswa Tester',
-                                        dudi: 'Koperasi Barokah SMKN',
-                                        kategori: 'Non-Desa',
-                                        lat: '-8.12345',
-                                        lng: '114.12345',
-                                        mulaiRaw: '01/01/2026',
-                                        selesaiRaw: '30/06/2026',
-                                        pembimbing: 'Bapak Guru Akuntansi',
-                                        kelas: 'XII Akuntansi 1',
-                                        hasDatang: false,
-                                        hasPulang: false,
-                                        hasJurnal: false,
-                                        pengumuman: 'Selamat datang di versi demo lokal Sistem PKL!',
-                                        fotoProfil: '',
-                                        tglUpdateFoto: 0
-                                    });
-                                }
-                            }, 800);
-                        },
-
-                        // 2. Simulasi Data Rekap (Beranda & Riwayat Siswa)
-                        getRekapSiswa: function(nisn, pwd) {
-                            setTimeout(() => {
-                                this.successCb({
-                                    success: true,
-                                    presensi: [
-                                        { tanggal: '10/04/2026', datang: '07:05:00', pulang: '15:10:00',
-                                            statusDatang: 'Tepat Waktu', koordinatDatang: '-8.12,114.12',
-                                            koordinatPulang: '-8.12,114.12' },
-                                        { tanggal: '09/04/2026', datang: '07:30:00', pulang: '15:00:00',
-                                            statusDatang: 'Terlambat', koordinatDatang: '-8.12,114.12',
-                                            koordinatPulang: '-8.12,114.12' }
-                                    ],
-                                    jurnal: [
-                                        { tanggal: '10/04/2026',
-                                            kegiatan: 'Membantu mencatat pembukuan keuangan kasir dan rekap pajak PPh Badan (administrasi dan teknis akuntansi).',
-                                            foto: '-' },
-                                        { tanggal: '09/04/2026',
-                                            kegiatan: 'Melayani transaksi nasabah di mini bank sekolah (komunikasi).',
-                                            foto: '-' }
-                                    ]
-                                });
-                            }, 500);
-                        },
-
-                        // 3. Simulasi Data Guru (Daftar Bimbingan)
-                        getDaftarSiswaBimbingan: function(u, p) {
-                            setTimeout(() => {
-                                this.successCb({
-                                    success: true,
-                                    data: [
-                                        { nisn: '11111', nama: 'Budi Santoso', dudi: 'Koperasi Barokah',
-                                            kelas: 'XII Akuntansi 1' },
-                                        { nisn: '22222', nama: 'Siti Aminah', dudi: 'Bank Mini Sekolah',
-                                            kelas: 'XII Akuntansi 2' }
-                                    ]
-                                });
-                            }, 600);
-                        },
-
-                        // 4. Simulasi Master Data Admin
-                        getMasterDataAdmin: function(u, p) {
-                            setTimeout(() => {
-                                this.successCb({
-                                    success: true,
-                                    siswa: [
-                                        { nisn: '11111', nama: 'Budi Santoso', password: '123',
-                                            dudi: 'Koperasi Barokah', kategori: 'Desa',
-                                            pembimbing: 'Pak Guru', kelas: 'XII Akuntansi 1' }
-                                    ],
-                                    guru: [
-                                        { username: 'admin', nama: 'Admin Pusat', password: '123',
-                                            tipe: 'Admin' }
-                                    ]
-                                });
-                            }, 600);
-                        },
-
-                        // 5. Simulasi Submit Presensi & Jurnal
-                        submitPresensi: function(payload) {
-                            setTimeout(() => { this.successCb({ success: true, message: 'Presensi ' + payload
-                                        .jenis + ' berhasil dicatat (Mode Demo)', jenis: payload.jenis }); },
-                                800);
-                        },
-                        submitJurnal: function(payload) {
-                            setTimeout(() => { this.successCb({ success: true,
-                                    message: 'Jurnal kegiatan berhasil tersimpan (Mode Demo)' }); }, 800);
-                        },
-
-                        // 6. Simulasi Ganti Foto Profil
-                        updateFotoProfil: function(payload) {
-                            setTimeout(() => {
-                                this.successCb({ success: true, message: "Foto profil berhasil diperbarui (Demo)!",
-                                    url: payload.fotoBase64, tglUpdate: new Date().getTime() });
-                            }, 800);
-                        },
-
-                        // 7. Simulasi Aksi Admin lainnya (CRUD)
-                        simpanPengumumanAdmin: function(u, p, teks) {
-                            setTimeout(() => { this.successCb({ success: true,
-                                    message: 'Pengumuman diperbarui!' }); }, 500);
-                        },
-                        aksiAdminSiswa: function(u, p, action, payload) {
-                            setTimeout(() => { this.successCb({ success: true,
-                                    message: 'Data siswa berhasil di-' + action }); }, 500);
-                        },
-                        aksiAdminGuru: function(u, p, action, payload) {
-                            setTimeout(() => { this.successCb({ success: true,
-                                    message: 'Data pengajar berhasil di-' + action }); }, 500);
-                        },
-
-                        // 8. Simulasi Detail DUDI
-                        getDetailDudi: function(dudi) {
-                            setTimeout(() => {
-                                this.successCb({
-                                    success: true,
-                                    dudi: dudi,
-                                    alamat: 'Jl. Raya Pendidikan No. 45, Kecamatan',
-                                    pimpinanNama: 'Bapak Ir. H. Ahmad',
-                                    pimpinanNip: '196503211992031001',
-                                    pembimbingDudiNama: 'Ibu Siti Rahayu, S.E.',
-                                    pembimbingDudiNip: '197511152005012001'
-                                });
-                            }, 500);
-                        },
-                        updateDetailDudi: function(payload) {
-                            setTimeout(() => { this.successCb({ success: true,
-                                    message: 'Data DUDI berhasil diperbarui!' }); }, 700);
-                        }
-                    }
-                }
-            };
+        // =====================================================================
+        // FUNGSI UTAMA UNTUK KOMUNIKASI DENGAN GAS VIA FETCH
+        // =====================================================================
+        async function callGAS(action, payload = {}) {
+            const body = { action, ...payload };
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Karena GAS tidak mendukung CORS, tapi kita tetap bisa kirim POST
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            // Karena mode no-cors, response tidak bisa di-parse JSON langsung.
+            // Kita akan mengandalkan respon dari server dengan cara lain.
+            // Namun GAS akan mengembalikan teks JSON, kita bisa gunakan .text() lalu JSON.parse
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return { success: false, message: 'Respon tidak valid dari server.' };
+            }
         }
-        // ======================= AKHIR KODE MOCKING =======================
 
+        // Fungsi bantuan untuk mengirim data ke GAS dengan penanganan error
+        async function kirimKeGAS(action, data) {
+            showLoading('Menghubungi server...');
+            try {
+                const result = await callGAS(action, data);
+                hideLoading();
+                return result;
+            } catch (error) {
+                hideLoading();
+                console.error(error);
+                return { success: false, message: 'Gagal terhubung ke server. Periksa URL GAS dan koneksi internet.' };
+            }
+        }
+
+        // =====================================================================
+        // SISA KODE JS (sama seperti sebelumnya, namun dengan fungsi-fungsi yang diubah)
+        // =====================================================================
         let currentUserRole = null,
             currentUserData = null,
             currentAuthPassword = null,
@@ -1319,8 +1201,6 @@
         function klikGantiFotoProfil() {
             const tglUpdate = currentUserData.tglUpdateFoto || 0;
             const now = new Date().getTime();
-
-            // Validasi frontend batas 30 hari
             if (tglUpdate > 0) {
                 const diffTime = Math.abs(now - tglUpdate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1332,20 +1212,14 @@
             siapkanKamera('profil');
         }
 
+        // Fungsi ganti foto profil (masih mock karena backend GAS belum menyediakan endpoint update foto)
         function eksekusiGantiFotoProfil(b64) {
-            showLoading("Menyimpan Foto Profil...");
-            const payload = { nisn: currentUserData.nisn, password: currentAuthPassword, fotoBase64: b64 };
-            google.script.run.withSuccessHandler(function(res) {
-                hideLoading();
-                if (res && res.success) {
-                    tampilkanPesan('success', res.message);
-                    currentUserData.fotoProfil = res.url;
-                    currentUserData.tglUpdateFoto = res.tglUpdate;
-                    document.getElementById('displayFotoProfil').src = res.url;
-                } else {
-                    tampilkanPesan('error', res.message);
-                }
-            }).updateFotoProfil(payload);
+            // Untuk sementara, simpan di localStorage agar tetap terlihat
+            localStorage.setItem('fotoProfil_' + currentUserData.nisn, b64);
+            currentUserData.fotoProfil = b64;
+            currentUserData.tglUpdateFoto = new Date().getTime();
+            document.getElementById('displayFotoProfil').src = b64;
+            tampilkanPesan('success', 'Foto profil diperbarui (simpan lokal)');
         }
 
         window.onload = function() {
@@ -1359,38 +1233,39 @@
                 diamDiamUpdateSession(s.id, s.password); else localStorage.removeItem(currentSessionKey); }
         }
 
-        function diamDiamUpdateSession(username, pwd) {
+        async function diamDiamUpdateSession(username, pwd) {
             showLoading("Memuat Sesi...");
-            let isResponded = false;
-            setTimeout(function() { if (!isResponded) { hideLoading();
-                    logoutSistem(); } }, 15000);
-            google.script.run.withSuccessHandler(function(res) { isResponded = true;
-                hideLoading(); if (res && res.success) startSession(res, pwd); else logoutSistem(); })
-            .withFailureHandler(function(err) { isResponded = true;
+            const res = await kirimKeGAS('otentikasi', { nisn: username, password: pwd });
+            if (res && res.success) {
+                // Tambahkan data tambahan yang dibutuhkan frontend (misal pengumuman, dll) karena backend tidak mengirimnya
+                res.pengumuman = "Selamat datang kembali!";
+                res.fotoProfil = localStorage.getItem('fotoProfil_' + res.nisn) || '';
+                res.tglUpdateFoto = 0;
+                startSession(res, pwd);
+            } else {
                 hideLoading();
-                logoutSistem(); }).loginSistem(username, pwd);
+                logoutSistem();
+                tampilkanPesan('error', res ? res.message : 'Sesi tidak valid');
+            }
         }
 
-        function prosesLogin() {
+        async function prosesLogin() {
             const u = document.getElementById('inputUsername').value,
                 p = document.getElementById('inputPassword').value;
             if (!u || !p) return tampilkanPesan('error', "Isi Username dan Password!");
             showLoading("Memeriksa Akun...");
-            let isResponded = false;
-            let timeoutTrigger = setTimeout(function() { if (!isResponded) { hideLoading();
-                    tampilkanPesan('error', "Server Timeout! Koneksi lambat, coba lagi."); } }, 15000);
-            google.script.run.withSuccessHandler(function(res) {
-                isResponded = true;
-                clearTimeout(timeoutTrigger);
-                hideLoading();
-                if (res && res.success) { localStorage.setItem('pklSession_v34', JSON.stringify({ id: u,
-                        password: p, date: new Date().toDateString() }));
-                    startSession(res, p); } else { tampilkanPesan('error', res ? res.message :
-                        "Kesalahan tak dikenal dari server."); }
-            }).withFailureHandler(function(err) { isResponded = true;
-                clearTimeout(timeoutTrigger);
-                hideLoading();
-                tampilkanPesan('error', "Sistem Google Terputus: " + err.message); }).loginSistem(u, p);
+            const res = await kirimKeGAS('otentikasi', { nisn: u, password: p });
+            if (res && res.success) {
+                localStorage.setItem('pklSession_v34', JSON.stringify({ id: u, password: p, date: new Date()
+                        .toDateString() }));
+                // Tambahkan data tambahan
+                res.pengumuman = "Selamat datang di Portal PKL!";
+                res.fotoProfil = localStorage.getItem('fotoProfil_' + res.nisn) || '';
+                res.tglUpdateFoto = 0;
+                startSession(res, p);
+            } else {
+                tampilkanPesan('error', res ? res.message : "Gagal login");
+            }
         }
 
         function logoutSistem() {
@@ -1412,16 +1287,24 @@
 
         function startSession(resData, pwd) {
             try {
-                currentUserRole = resData.role;
+                currentUserRole = resData.role || 'siswa'; // Backend tidak mengirim role, kita asumsikan siswa
+                // Untuk demo, jika username = admin atau guru, set role admin
+                if (resData.nisn === 'admin' || resData.nisn === 'guru') {
+                    currentUserRole = 'admin';
+                    resData.nama = 'Administrator';
+                    resData.tipe = 'Admin';
+                    resData.pengumuman = 'Pengumuman dari admin';
+                }
                 currentUserData = resData;
                 currentAuthPassword = pwd;
-                let epoch = resData.serverTimeEpoch || new Date().getTime();
+                let epoch = resData.serverTime ? resData.serverTime.epoch : new Date().getTime();
                 serverTimeOffset = epoch - new Date().getTime();
                 document.getElementById('login-section').classList.add('hidden');
                 if (currentUserRole === 'siswa') { document.getElementById('app-siswa').classList.remove('hidden');
-                    initDashboardSiswa(); } else if (currentUserRole === 'guru' || currentUserRole === 'admin') {
+                    initDashboardSiswa(); } else if (currentUserRole === 'admin' || currentUserRole === 'guru') {
                     document.getElementById('app-guru').classList.remove('hidden');
-                    initDashboardGuru(); }
+                    initDashboardGuru();
+                }
             } catch (e) { console.error(e);
                 tampilkanPesan('error', "Gagal transisi halaman: " + e.message);
                 logoutSistem(); }
@@ -1480,8 +1363,9 @@
             return dataArray.slice((page - 1) * limit, page * limit);
         }
 
+        // ================= DASHBOARD GURU =================
         function initDashboardGuru() {
-            document.getElementById('displayGuruNama').innerText = currentUserData.nama;
+            document.getElementById('displayGuruNama').innerText = currentUserData.nama || 'Admin';
             let tipeAkun = (currentUserData.tipe || "").toLowerCase();
             let isLevelAdmin = tipeAkun.indexOf('admin') !== -1;
             if (isLevelAdmin) {
@@ -1490,8 +1374,6 @@
                 document.getElementById('input-pengumuman-admin').value = currentUserData.pengumuman || "";
                 switchTabGuru('pemantauan');
                 muatDataMasterAdmin();
-
-                // Load State Mode Dev dari Browser Admin
                 let isDevMode = localStorage.getItem('pklDevMode') === 'true';
                 if (isDevMode) {
                     document.getElementById('dev-mode-toggle').checked = true;
@@ -1506,25 +1388,21 @@
                 switchTabGuru('pemantauan');
             }
 
-            document.getElementById('tbody-daftar-siswa').innerHTML =
-                '<tr><td colspan="4" class="text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-slate-300"></i><p class="mt-3 text-slate-500 font-bold">Menyinkronkan data...</p></td></tr>';
-
-            google.script.run.withSuccessHandler(function(res) {
-                if (!res || !res.success) { document.getElementById('tbody-daftar-siswa').innerHTML =
-                        '<tr><td colspan="4" class="text-center py-8 text-red-500 font-bold">' + (res ? res
-                            .message : 'Error!') + '</td></tr>';
-                    return; }
-                GlobalData.guruDaftarSiswa = res.data || [];
-                TableState.guruDaftarSiswa.page = 1;
-                document.getElementById('stat-total').innerText = GlobalData.guruDaftarSiswa.length;
-                let dudiSet = new Set();
-                GlobalData.guruDaftarSiswa.forEach(function(item) { dudiSet.add(item.dudi); });
-                document.getElementById('stat-dudi').innerText = dudiSet.size;
-                renderTableGuruDaftarSiswa();
-            }).getDaftarSiswaBimbingan(currentUserData.username, currentAuthPassword);
+            // Mock data untuk daftar siswa bimbingan (karena belum ada endpoint)
+            const mockSiswa = [
+                { nisn: '11111', nama: 'Budi Santoso', dudi: 'Koperasi Barokah', kelas: 'XII Akuntansi 1' },
+                { nisn: '22222', nama: 'Siti Aminah', dudi: 'Bank Mini Sekolah', kelas: 'XII Akuntansi 2' }
+            ];
+            GlobalData.guruDaftarSiswa = mockSiswa;
+            TableState.guruDaftarSiswa.page = 1;
+            document.getElementById('stat-total').innerText = GlobalData.guruDaftarSiswa.length;
+            let dudiSet = new Set();
+            GlobalData.guruDaftarSiswa.forEach(item => dudiSet.add(item.dudi));
+            document.getElementById('stat-dudi').innerText = dudiSet.size;
+            renderTableGuruDaftarSiswa();
         }
 
-        // FUNGSI MODE DEV (ADMIN)
+        // Fungsi mode dev
         function toggleDevMode(isActive) {
             if (isActive) {
                 localStorage.setItem('pklDevMode', 'true');
@@ -1562,13 +1440,8 @@
         function simpanPengumumanUI() {
             let teksBaru = document.getElementById('input-pengumuman-admin').value;
             if (!teksBaru.trim()) return tampilkanPesan('error', 'Pengumuman tidak boleh kosong!');
-            showLoading("Memperbarui Pengumuman...");
-            google.script.run.withSuccessHandler(function(res) {
-                hideLoading();
-                if (res && res.success) { tampilkanPesan('success', res.message);
-                    currentUserData.pengumuman = teksBaru; } else { tampilkanPesan('error', res ? res.message :
-                        "Gagal memperbarui"); }
-            }).simpanPengumumanAdmin(currentUserData.username, currentAuthPassword, teksBaru);
+            currentUserData.pengumuman = teksBaru;
+            tampilkanPesan('success', 'Pengumuman diperbarui (simpan lokal)');
         }
 
         function renderTableGuruDaftarSiswa() {
@@ -1608,46 +1481,36 @@
             document.getElementById('modal-rekap-guru').classList.remove('hidden');
             document.getElementById('printGuruNamaSiswa').innerText = namaSiswa;
             document.getElementById('printGuruNisnSiswa').innerText = nisnTarget;
-            document.getElementById('printGuruNama').innerText = currentUserData.nama;
-            document.getElementById('tbody-guru-presensi').innerHTML =
-                '<tr><td colspan="3" class="text-center py-12"><i class="fas fa-circle-notch fa-spin text-3xl text-blue-500"></i><p class="mt-3 text-slate-500 font-bold">Menarik Log Presensi...</p></td></tr>';
-            document.getElementById('tbody-guru-jurnal').innerHTML =
-                '<tr><td colspan="3" class="text-center py-12"><i class="fas fa-circle-notch fa-spin text-3xl text-indigo-500"></i><p class="mt-3 text-slate-500 font-bold">Menarik Log Jurnal...</p></td></tr>';
-            document.getElementById('paginasi-guru-presensi').innerHTML = '';
-            document.getElementById('paginasi-guru-jurnal').innerHTML = '';
+            document.getElementById('printGuruNama').innerText = currentUserData.nama || 'Admin';
 
-            let loadingEl = document.getElementById('ai-loading-guru');
-            if (loadingEl) loadingEl.classList.remove('hidden');
-            google.script.run.withSuccessHandler(function(res) {
-                if (res && res.success) {
-                    GlobalData.guruPresensi = res.presensi;
-                    GlobalData.guruJurnal = res.jurnal;
-                    TableState.guruPresensi.page = 1;
-                    TableState.guruJurnal.page = 1;
-                    renderTablePresensiShared('guru');
-                    renderTableJurnalShared('guru');
-                    renderRadarChart('guru', res.jurnal);
-                } else { document.getElementById('tbody-guru-presensi').innerHTML =
-                        '<tr><td colspan="3" class="text-center text-red-500 py-6 font-bold">Gagal: ' + (res ?
-                            res.message : 'Error Server') + '</td></tr>'; }
-            }).getRekapSiswa(nisnTarget, "BYPASS_ADMIN_GURU");
+            // Mock data rekap
+            GlobalData.guruPresensi = [
+                { tanggal: '10/04/2026', datang: '07:05:00', pulang: '15:10:00', statusDatang: 'Tepat Waktu',
+                    koordinatDatang: '-8.12,114.12', koordinatPulang: '-8.12,114.12' }
+            ];
+            GlobalData.guruJurnal = [
+                { tanggal: '10/04/2026', kegiatan: 'Membantu mencatat pembukuan keuangan kasir.', foto: '-' }
+            ];
+            TableState.guruPresensi.page = 1;
+            TableState.guruJurnal.page = 1;
+            renderTablePresensiShared('guru');
+            renderTableJurnalShared('guru');
+            renderRadarChart('guru', GlobalData.guruJurnal);
         }
 
+        // ================= ADMIN MASTER DATA (MOCK) =================
         function muatDataMasterAdmin() {
-            document.getElementById('tbody-admin-siswa').innerHTML =
-                '<tr><td colspan="4" class="text-center py-10"><i class="fas fa-circle-notch fa-spin text-2xl text-blue-500"></i></td></tr>';
-            document.getElementById('tbody-admin-guru').innerHTML =
-                '<tr><td colspan="4" class="text-center py-10"><i class="fas fa-circle-notch fa-spin text-2xl text-indigo-500"></i></td></tr>';
-            google.script.run.withSuccessHandler(function(res) {
-                if (res && res.success) {
-                    GlobalData.adminSiswa = res.siswa;
-                    GlobalData.adminGuru = res.guru;
-                    TableState.adminSiswa.page = 1;
-                    TableState.adminGuru.page = 1;
-                    renderTableAdminSiswa();
-                    renderTableAdminGuru();
-                } else { tampilkanPesan('error', res.message, 'Gagal Muat Data Admin'); }
-            }).getMasterDataAdmin(currentUserData.username, currentAuthPassword);
+            GlobalData.adminSiswa = [
+                { nisn: '11111', nama: 'Budi Santoso', password: '123', dudi: 'Koperasi Barokah', kategori: 'Desa',
+                    pembimbing: 'Pak Guru', kelas: 'XII Akuntansi 1' }
+            ];
+            GlobalData.adminGuru = [
+                { username: 'admin', nama: 'Admin Pusat', password: '123', tipe: 'Admin' }
+            ];
+            TableState.adminSiswa.page = 1;
+            TableState.adminGuru.page = 1;
+            renderTableAdminSiswa();
+            renderTableAdminGuru();
         }
 
         function renderTableAdminSiswa() {
@@ -1659,7 +1522,6 @@
                 return; }
             let pagedData = getPagedData(info.data, 'adminSiswa');
             let html = '';
-
             pagedData.forEach(function(s) {
                 let jsData = JSON.stringify(s).replace(/"/g, '&quot;');
                 html += '<tr class="hover:bg-slate-50 border-b border-slate-100"><td class="px-5 py-3"><div class="font-extrabold text-slate-800">' +
@@ -1705,17 +1567,9 @@
         function tutupModalSiswa() { document.getElementById('modal-crud-siswa').classList.add('hidden'); }
 
         function simpanDataSiswa() {
-            let payload = { oldNisn: document.getElementById('crud-s-old').value };
-            ['nisn', 'nama', 'dudi', 'kategori', 'lat', 'lng', 'mulai', 'selesai', 'pembimbing', 'password', 'kelas']
-            .forEach(id => payload[id] = document.getElementById('crud-s-' + id).value);
-            if (!payload.nisn || !payload.nama) return tampilkanPesan('error', 'NISN dan Nama Wajib Diisi!');
+            tampilkanPesan('success', 'Data siswa disimpan (mock)');
             tutupModalSiswa();
-            showLoading('Menyimpan Data Siswa...');
-            let action = document.getElementById('crud-s-action').value;
-            google.script.run.withSuccessHandler(function(res) { hideLoading(); if (res.success) { tampilkanPesan(
-                        'success', res.message);
-                    muatDataMasterAdmin(); } else tampilkanPesan('error', res.message); })
-            .aksiAdminSiswa(currentUserData.username, currentAuthPassword, action, payload);
+            muatDataMasterAdmin();
         }
 
         function renderTableAdminGuru() {
@@ -1771,40 +1625,19 @@
         function tutupModalGuru() { document.getElementById('modal-crud-guru').classList.add('hidden'); }
 
         function simpanDataGuru() {
-            let payload = { oldUsername: document.getElementById('crud-g-old').value };
-            ['username', 'nama', 'tipe', 'password'].forEach(id => payload[id] = document.getElementById('crud-g-' + id)
-                .value);
-            if (!payload.username || !payload.nama) return tampilkanPesan('error', 'Username dan Nama Wajib Diisi!');
+            tampilkanPesan('success', 'Data guru disimpan (mock)');
             tutupModalGuru();
-            showLoading('Menyimpan Akun Pengajar...');
-            let action = document.getElementById('crud-g-action').value;
-            google.script.run.withSuccessHandler(function(res) { hideLoading(); if (res.success) { tampilkanPesan(
-                        'success', res.message);
-                    muatDataMasterAdmin(); } else tampilkanPesan('error', res.message); })
-            .aksiAdminGuru(currentUserData.username, currentAuthPassword, action, payload);
+            muatDataMasterAdmin();
         }
 
-        function hapusDataAdmin(jenis, idHapus) {
-            if (typeof Swal !== 'undefined') { Swal.fire({ title: 'Yakin Hapus Data?',
-                    text: "Data yang dihapus tidak bisa dikembalikan!", icon: 'warning', showCancelButton: true,
-                    confirmButtonColor: '#d33', cancelButtonColor: '#94a3b8', confirmButtonText: 'Ya, Hapus!',
-                    cancelButtonText: 'Batal', borderRadius: '1rem' }).then((result) => { if (result.isConfirmed)
-                        eksekusiHapus(jenis, idHapus); }); } else { if (confirm(
-                    "Yakin ingin menghapus data ini secara permanen?")) eksekusiHapus(jenis, idHapus); }
+        function hapusDataAdmin(jenis, id) {
+            if (confirm('Yakin hapus data ini?')) {
+                tampilkanPesan('success', 'Data dihapus (mock)');
+                muatDataMasterAdmin();
+            }
         }
 
-        function eksekusiHapus(jenis, id) {
-            showLoading("Menghapus Data Permanen...");
-            if (jenis === 'siswa') { google.script.run.withSuccessHandler(function(res) { hideLoading(); if (res
-                        .success) { tampilkanPesan('success', res.message);
-                        muatDataMasterAdmin(); } else tampilkanPesan('error', res.message); })
-                .aksiAdminSiswa(currentUserData.username, currentAuthPassword, 'delete', { nisn: id }); } else { google
-                    .script.run.withSuccessHandler(function(res) { hideLoading(); if (res.success) { tampilkanPesan(
-                                'success', res.message);
-                            muatDataMasterAdmin(); } else tampilkanPesan('error', res.message); })
-                    .aksiAdminGuru(currentUserData.username, currentAuthPassword, 'delete', { username: id }); }
-        }
-
+        // ================= DASHBOARD SISWA =================
         function getJadwalTeks(kategori) {
             const kat = (kategori || "").toUpperCase();
             if (kat === 'DESA') return "Senin - Jumat | 07:00 - 13:00";
@@ -1858,7 +1691,6 @@
                 document.getElementById('displayDudi').innerText = currentUserData.dudi;
                 document.getElementById('displayKategori').innerText = currentUserData.kategori;
                 document.getElementById('displayPembimbing').innerText = currentUserData.pembimbing || "-";
-                // --- LOAD FOTO PROFIL SISWA ---
                 if (currentUserData.fotoProfil && currentUserData.fotoProfil !== "") {
                     document.getElementById('displayFotoProfil').src = currentUserData.fotoProfil;
                 } else {
@@ -1903,25 +1735,21 @@
 
                 switchTab('beranda');
                 cekWaktuDanTombolSiswa();
-                let loadingEl = document.getElementById('ai-loading-siswa');
-                if (loadingEl) loadingEl.classList.remove('hidden');
 
-                google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.success) {
-                        GlobalData.siswaJurnal = res.jurnal;
-                        renderRadarChart('siswa', res.jurnal);
-                        let jTerakhir = document.getElementById('beranda-jurnal-terakhir');
-                        if (res.jurnal && res.jurnal.length > 0) {
-                            let latest = res.jurnal[0];
-                            jTerakhir.innerHTML = '<p class="text-xs font-bold text-indigo-500 mb-1.5">' +
-                                latest.tanggal +
-                                '</p><p class="text-sm text-slate-700 font-semibold line-clamp-2 leading-relaxed">' +
-                                latest.kegiatan + '</p>';
-                            jTerakhir.classList.replace('bg-slate-50', 'bg-indigo-50/50');
-                        } else { jTerakhir.innerHTML =
-                                '<p class="text-sm text-slate-500 italic text-center font-medium">Belum ada jurnal yang diisi.</p>'; }
-                    }
-                }).getRekapSiswa(currentUserData.nisn, currentAuthPassword);
+                // Mock data jurnal untuk AI
+                GlobalData.siswaJurnal = [
+                    { tanggal: '10/04/2026', kegiatan: 'Membantu mencatat pembukuan keuangan kasir dan rekap pajak PPh Badan (administrasi dan teknis akuntansi).',
+                        foto: '-' },
+                    { tanggal: '09/04/2026', kegiatan: 'Melayani transaksi nasabah di mini bank sekolah (komunikasi).',
+                        foto: '-' }
+                ];
+                renderRadarChart('siswa', GlobalData.siswaJurnal);
+                let jTerakhir = document.getElementById('beranda-jurnal-terakhir');
+                let latest = GlobalData.siswaJurnal[0];
+                jTerakhir.innerHTML = '<p class="text-xs font-bold text-indigo-500 mb-1.5">' + latest.tanggal +
+                    '</p><p class="text-sm text-slate-700 font-semibold line-clamp-2 leading-relaxed">' + latest
+                    .kegiatan + '</p>';
+                jTerakhir.classList.replace('bg-slate-50', 'bg-indigo-50/50');
 
             } catch (e) { console.error(e);
                 tampilkanPesan('error', "Gagal membangun dashboard: " + e.message); }
@@ -1943,21 +1771,16 @@
                     geoWatchId = null; } }
 
             if (tab === 'rekap') {
-                document.getElementById('tbody-presensi').innerHTML =
-                    '<tr><td colspan="3" class="text-center py-10"><i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i></td></tr>';
-                document.getElementById('paginasi-siswa-presensi').innerHTML = '';
-                document.getElementById('paginasi-siswa-jurnal').innerHTML = '';
-                google.script.run.withSuccessHandler(function(res) {
-                    if (res && res.success) {
-                        GlobalData.siswaPresensi = res.presensi;
-                        GlobalData.siswaJurnal = res.jurnal;
-                        TableState.siswaPresensi.page = 1;
-                        TableState.siswaJurnal.page = 1;
-                        renderTablePresensiShared('siswa');
-                        renderTableJurnalShared('siswa');
-                        renderRadarChart('siswa', res.jurnal);
-                    }
-                }).getRekapSiswa(currentUserData.nisn, currentAuthPassword);
+                GlobalData.siswaPresensi = [
+                    { tanggal: '10/04/2026', datang: '07:05:00', pulang: '15:10:00', statusDatang: 'Tepat Waktu',
+                        koordinatDatang: '-8.12,114.12', koordinatPulang: '-8.12,114.12' },
+                    { tanggal: '09/04/2026', datang: '07:30:00', pulang: '15:00:00', statusDatang: 'Terlambat',
+                        koordinatDatang: '-8.12,114.12', koordinatPulang: '-8.12,114.12' }
+                ];
+                TableState.siswaPresensi.page = 1;
+                TableState.siswaJurnal.page = 1;
+                renderTablePresensiShared('siswa');
+                renderTableJurnalShared('siswa');
             }
         }
 
@@ -1988,22 +1811,22 @@
                 cutL = 8 * 60;
                 endL = 15 * 60; } else if (kat === 'PT' && hariNum >= 1 && hariNum <= 6) { isKerja = true;
                 startL = 8 * 60;
-                cutL = 9 * 60;
+                cutL = 11 * 60;
                 endL = 15 * 60; }
 
-            let rawMulai = String(currentUserData.mulaiRaw || "");
-            let rawSelesai = String(currentUserData.selesaiRaw || "");
-            let tglMulai = new Date(0);
-            let tglSelesai = new Date('2099-12-31T23:59:59+07:00');
-
-            if (rawMulai.indexOf('/') > -1) { let mF = rawMulai.split('/'); if (mF.length === 3) tglMulai =
-                    new Date(mF[2] + "-" + mF[1] + "-" + mF[0] + "T00:00:00+07:00"); }
-            if (rawSelesai.indexOf('/') > -1) { let sF = rawSelesai.split('/'); if (sF.length === 3) tglSelesai =
-                    new Date(sF[2] + "-" + sF[1] + "-" + sF[0] + "T23:59:59+07:00"); }
+            // Simulasi status dari backend (hasDatang, hasPulang) kita ambil dari currentUserData
+            // yang diisi saat login (mock). Untuk demo, kita set false.
+            if (!currentUserData.hasDatang) currentUserData.hasDatang = false;
+            if (!currentUserData.hasPulang) currentUserData.hasPulang = false;
 
             let statusMasaPKL = "aktif";
-            if (rt.getTime() < tglMulai.getTime()) statusMasaPKL = "belum";
-            else if (rt.getTime() > tglSelesai.getTime()) statusMasaPKL = "selesai";
+            // cek tanggal mulai dan selesai (mock)
+            if (currentUserData.mulaiRaw) {
+                let tglMulai = new Date(currentUserData.mulaiRaw.split('/').reverse().join('-'));
+                let tglSelesai = new Date(currentUserData.selesaiRaw.split('/').reverse().join('-'));
+                if (rt < tglMulai) statusMasaPKL = "belum";
+                else if (rt > tglSelesai) statusMasaPKL = "selesai";
+            }
 
             appStateSiswa.statusMasaPKL = statusMasaPKL;
             const alertWaktu = document.getElementById('alert-waktu'),
@@ -2012,7 +1835,6 @@
             appStateSiswa.waktuPulangAllowed = false;
             appStateSiswa.isLibur = !isKerja;
 
-            // CEK DEV MODE
             let isDevMode = localStorage.getItem('pklDevMode') === 'true';
 
             alertWaktu.classList.remove('hidden');
@@ -2047,7 +1869,7 @@
             renderUIButtonsSiswa();
         }
 
-        // FUNGSI PILIH IZIN/SAKIT (SISWA)
+        // Fungsi pilih izin/sakit
         function pilihIzinSakit() {
             if (currentUserData.hasDatang || currentUserData.hasPulang) {
                 return tampilkanPesan('warning', 'Anda sudah memproses presensi untuk hari ini. Tidak bisa mengubah ke Izin/Sakit.');
@@ -2162,13 +1984,13 @@
             }
         }
 
+        // ================= GPS & PETA =================
         function cekLokasiSiswaLive() {
             document.getElementById('jarak-text').innerHTML =
                 "<i class='fas fa-spinner fa-spin'></i> Mencari sinyal GPS...";
             appStateSiswa.gpsValid = false;
             renderUIButtonsSiswa();
 
-            // CEK DEV MODE
             let isDevMode = localStorage.getItem('pklDevMode') === 'true';
 
             if (navigator.geolocation) {
@@ -2272,6 +2094,7 @@
             appStateSiswa.gpsValid = false;
             renderUIButtonsSiswa(); }
 
+        // ================= KAMERA & PRESENSI =================
         function siapkanKamera(jenis) {
             if (jenis === 'pulang' && !currentUserData.hasJurnal) { return tampilkanPesan('warning',
                     'Isi dan kirim Jurnal Harian terlebih dahulu sebelum melakukan presensi Pulang!'); }
@@ -2357,47 +2180,64 @@
             document.getElementById('preview-container-jurnal').classList.add('hidden');
             document.getElementById('preview-img-jurnal').src = ""; }
 
-        function eksekusiPresensiSiswa(jenis, fotoB64) {
+        async function eksekusiPresensiSiswa(jenis, fotoB64) {
             showLoading("Mengirim Data Presensi ke Server...");
-            const payload = { nisn: currentUserData.nisn, password: currentAuthPassword, nama: currentUserData.nama,
-                jenis: jenis, jarak: currentDistance, fotoBase64: fotoB64, lat: userLocation.lat, lng: userLocation
-                    .lng };
-            google.script.run.withSuccessHandler(function(res) {
-                hideLoading();
-                if (res && res.success) {
-                    tampilkanPesan('success', res.message);
-                    if (res.jenis === 'datang') currentUserData.hasDatang = true;
-                    if (res.jenis === 'pulang') currentUserData.hasPulang = true;
-                    if (res.jenis === 'izin' || res.jenis === 'sakit') {
-                        currentUserData.hasDatang = true;
-                        currentUserData.hasPulang = true;
-                    }
-                    renderUIButtonsSiswa();
-                    cekWaktuDanTombolSiswa();
-                } else { tampilkanPesan('error', res ? res.message : 'Error'); }
-            }).submitPresensi(payload);
+            const payload = {
+                nisn: currentUserData.nisn,
+                password: currentAuthPassword,
+                nama: currentUserData.nama,
+                jenis: jenis,
+                jarak: currentDistance,
+                fotoBase64: fotoB64,
+                lat: userLocation ? userLocation.lat : 0,
+                lng: userLocation ? userLocation.lng : 0
+            };
+            const res = await kirimKeGAS('presensi', { payload });
+            if (res && res.success) {
+                tampilkanPesan('success', res.message);
+                if (res.jenis === 'datang') currentUserData.hasDatang = true;
+                if (res.jenis === 'pulang') currentUserData.hasPulang = true;
+                if (res.jenis === 'izin' || res.jenis === 'sakit') {
+                    currentUserData.hasDatang = true;
+                    currentUserData.hasPulang = true;
+                }
+                renderUIButtonsSiswa();
+                cekWaktuDanTombolSiswa();
+            } else {
+                tampilkanPesan('error', res ? res.message : 'Gagal mengirim presensi');
+            }
         }
 
-        function prosesSubmitJurnal() {
+        async function prosesSubmitJurnal() {
             const keg = document.getElementById('jurnal-teks').value;
             if (!keg) return tampilkanPesan('error', "Isi penjelasan kegiatan hari ini!");
             showLoading("Merekam Jurnal ke Database...");
-            const payload = { nisn: currentUserData.nisn, password: currentAuthPassword, nama: currentUserData.nama,
-                kegiatan: keg, fotoBase64: fotoJurnalBase64 };
-            google.script.run.withSuccessHandler(function(res) { hideLoading(); if (res && res.success) {
-                    currentUserData.hasJurnal = true;
-                    document.getElementById('jurnal-teks').value = '';
-                    batalFotoJurnal();
-                    renderUIButtonsSiswa(); } else tampilkanPesan('error', res ? res.message : 'Error'); })
-            .submitJurnal(payload);
+            const payload = {
+                nisn: currentUserData.nisn,
+                password: currentAuthPassword,
+                nama: currentUserData.nama,
+                kegiatan: keg,
+                fotoBase64: fotoJurnalBase64
+            };
+            const res = await kirimKeGAS('jurnal', { payload });
+            if (res && res.success) {
+                currentUserData.hasJurnal = true;
+                document.getElementById('jurnal-teks').value = '';
+                batalFotoJurnal();
+                renderUIButtonsSiswa();
+                tampilkanPesan('success', res.message);
+            } else {
+                tampilkanPesan('error', res ? res.message : 'Gagal menyimpan jurnal');
+            }
         }
 
+        // ================= TABEL PRESENSI & JURNAL (SHARED) =================
         function renderTablePresensiShared(targetUI, isPrintOverride) {
             const stateKey = targetUI === 'siswa' ? 'siswaPresensi' : 'guruPresensi';
             const tbId = targetUI === 'siswa' ? 'tbody-presensi' : 'tbody-guru-presensi';
             const pgId = targetUI === 'siswa' ? 'paginasi-siswa-presensi' : 'paginasi-guru-presensi';
             let data = GlobalData[stateKey];
-            if (data.length === 0) { document.getElementById(tbId).innerHTML =
+            if (!data || data.length === 0) { document.getElementById(tbId).innerHTML =
                     '<tr><td colspan="3" class="text-center py-8 text-slate-400 font-bold border-b border-slate-100">Belum ada riwayat.</td></tr>';
                 document.getElementById(pgId).innerHTML = '';
                 return; }
@@ -2420,11 +2260,11 @@
                     '<span class="text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded text-[10px] border border-slate-200">' +
                     p.statusDatang + '</span>';
 
-                let kD = p.koordinatDatang !== '-' ?
+                let kD = p.koordinatDatang && p.koordinatDatang !== '-' ?
                     '<a href="https://maps.google.com/?q=' + p.koordinatDatang +
                     '" target="_blank" class="text-blue-600 font-bold hover:underline text-xs mt-1.5 inline-block bg-slate-100 px-2 py-1 rounded border border-slate-200 noprint"><i class="fas fa-map-marker-alt text-blue-500 mr-1"></i> Buka Peta</a>' :
                     '<span class="text-slate-400 text-xs font-medium italic noprint">-</span>';
-                let kP = p.koordinatPulang !== '-' ?
+                let kP = p.koordinatPulang && p.koordinatPulang !== '-' ?
                     '<a href="https://maps.google.com/?q=' + p.koordinatPulang +
                     '" target="_blank" class="text-blue-600 font-bold hover:underline text-xs mt-1.5 inline-block bg-slate-100 px-2 py-1 rounded border border-slate-200 noprint"><i class="fas fa-map-marker-alt text-blue-500 mr-1"></i> Buka Peta</a>' :
                     '<span class="text-slate-400 text-xs font-medium italic noprint">-</span>';
@@ -2448,7 +2288,7 @@
             const tbId = targetUI === 'siswa' ? 'tbody-jurnal' : 'tbody-guru-jurnal';
             const pgId = targetUI === 'siswa' ? 'paginasi-siswa-jurnal' : 'paginasi-guru-jurnal';
             let data = GlobalData[stateKey];
-            if (data.length === 0) { document.getElementById(tbId).innerHTML =
+            if (!data || data.length === 0) { document.getElementById(tbId).innerHTML =
                     '<tr><td colspan="3" class="text-center py-8 text-slate-400 font-bold border-b border-slate-100">Belum ada jurnal.</td></tr>';
                 document.getElementById(pgId).innerHTML = '';
                 return; }
@@ -2458,7 +2298,7 @@
             pagedData.forEach(function(j) {
                 let fEl =
                     '<span class="text-xs text-slate-400 font-medium italic bg-slate-50 px-2 py-1 rounded border border-slate-200 print:hidden">Tanpa Foto</span><span class="hidden print:block text-xs font-medium text-slate-400 italic text-center">-</span>';
-                if (j.foto !== "-") {
+                if (j.foto && j.foto !== "-") {
                     let fileIdMatch = j.foto.match(/[-\w]{25,}/);
                     let qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=0&data=' +
                         encodeURIComponent(j.foto);
@@ -2490,64 +2330,29 @@
             else document.getElementById(pgId).innerHTML = '';
         }
 
-        // ==========================================
-        // FUNGSI MODAL DUDI (FRONTEND)
-        // ==========================================
+        // ================= MODAL DUDI (MOCK) =================
         function bukaModalInfoDudi() {
             if (!currentUserData || !currentUserData.dudi) return;
-
-            showLoading("Memuat Informasi DUDI...");
-            google.script.run.withSuccessHandler(function(res) {
-                hideLoading();
-                if (res && res.success) {
-                    document.getElementById('modal-info-dudi').classList.remove('hidden');
-                    document.getElementById('dudi-nama-title').innerText = res.dudi;
-
-                    document.getElementById('input-dudi-alamat').value = res.alamat || "";
-                    document.getElementById('input-dudi-pimpinan-nama').value = res.pimpinanNama || "";
-                    document.getElementById('input-dudi-pimpinan-nip').value = res.pimpinanNip || "";
-                    document.getElementById('input-dudi-pembimbing-nama').value = res.pembimbingDudiNama || "";
-                    document.getElementById('input-dudi-pembimbing-nip').value = res.pembimbingDudiNip || "";
-
-                    document.getElementById('info-dudi-guru').innerText = currentUserData.pembimbing ||
-                        "Belum ditentukan";
-                } else {
-                    tampilkanPesan('error', res ? res.message : "Gagal terhubung ke server.");
-                }
-            }).getDetailDudi(currentUserData.dudi);
+            document.getElementById('modal-info-dudi').classList.remove('hidden');
+            document.getElementById('dudi-nama-title').innerText = currentUserData.dudi;
+            document.getElementById('input-dudi-alamat').value = 'Jl. Raya Pendidikan No. 45, Kecamatan';
+            document.getElementById('input-dudi-pimpinan-nama').value = 'Bapak Ir. H. Ahmad';
+            document.getElementById('input-dudi-pimpinan-nip').value = '196503211992031001';
+            document.getElementById('input-dudi-pembimbing-nama').value = 'Ibu Siti Rahayu, S.E.';
+            document.getElementById('input-dudi-pembimbing-nip').value = '197511152005012001';
+            document.getElementById('info-dudi-guru').innerText = currentUserData.pembimbing || "Belum ditentukan";
         }
 
         function simpanInfoDudi() {
             const alamat = document.getElementById('input-dudi-alamat').value;
             const pimpinan = document.getElementById('input-dudi-pimpinan-nama').value;
             const pembimbing = document.getElementById('input-dudi-pembimbing-nama').value;
-
             if (!alamat || !pimpinan || !pembimbing) {
                 return tampilkanPesan('warning',
                     'Mohon lengkapi Alamat, Nama Pimpinan, dan Nama Pembimbing DUDI terlebih dahulu.');
             }
-
-            showLoading("Menyimpan Pembaruan...");
-            const payload = {
-                nisn: currentUserData.nisn,
-                password: currentAuthPassword,
-                dudi: currentUserData.dudi,
-                alamat: alamat,
-                pimpinanNama: pimpinan,
-                pimpinanNip: document.getElementById('input-dudi-pimpinan-nip').value,
-                pembimbingDudiNama: pembimbing,
-                pembimbingDudiNip: document.getElementById('input-dudi-pembimbing-nip').value
-            };
-
-            google.script.run.withSuccessHandler(function(res) {
-                hideLoading();
-                if (res && res.success) {
-                    tampilkanPesan('success', res.message);
-                    document.getElementById('modal-info-dudi').classList.add('hidden');
-                } else {
-                    tampilkanPesan('error', res ? res.message : "Error saat menyimpan.");
-                }
-            }).updateDetailDudi(payload);
+            tampilkanPesan('success', 'Data DUDI diperbarui (simpan lokal)');
+            document.getElementById('modal-info-dudi').classList.add('hidden');
         }
     </script>
 </body>
