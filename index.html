@@ -889,20 +889,33 @@
         // =====================================================================
         async function callGAS(action, payload = {}) {
             const body = { action, ...payload };
-            const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Karena GAS tidak mendukung CORS, tapi kita tetap bisa kirim POST
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            // Karena mode no-cors, response tidak bisa di-parse JSON langsung.
-            // Kita akan mengandalkan respon dari server dengan cara lain.
-            // Namun GAS akan mengembalikan teks JSON, kita bisa gunakan .text() lalu JSON.parse
-            const text = await response.text();
             try {
-                return JSON.parse(text);
-            } catch (e) {
-                return { success: false, message: 'Respon tidak valid dari server.' };
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+        
+                // Periksa status HTTP
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+        
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Respon dari server bukan JSON yang valid. Periksa URL GAS dan pastikan mengembalikan JSON.');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                // Deteksi error CORS / koneksi
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    throw new Error('Gagal terhubung ke server. Pastikan URL GAS benar, web app sudah di-deploy dengan akses "Anyone", dan tidak ada blokir CORS.');
+                }
+                throw error;
             }
         }
 
